@@ -173,7 +173,7 @@ export function HotspotPropertiesPanel({ page, hotspotId, allPages }: Props) {
               <Input
                 value={hotspot.action.title}
                 onChange={(e) =>
-                  setAction({ type: "showPopup", title: e.target.value, content: hotspot.action!.type === "showPopup" ? hotspot.action.content : "" })
+                  setAction({ type: "showPopup", title: e.target.value, content: hotspot.action?.type === "showPopup" ? hotspot.action.content : "" })
                 }
               />
             </div>
@@ -182,8 +182,7 @@ export function HotspotPropertiesPanel({ page, hotspotId, allPages }: Props) {
               <Input
                 value={hotspot.action.content}
                 onChange={(e) =>
-                  setAction({ type: "showPopup", title: hotspot.action!.type === "showPopup" ? hotspot.action.title : "", content: e.target.value })
-                }
+setAction({ type: "showPopup", title: hotspot.action?.type === "showPopup" ? hotspot.action.title : "", content: e.target.value })                }
               />
             </div>
           </div>
