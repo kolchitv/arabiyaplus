@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    direction: rtl;
+  }
+
+  body {
+    font-feature-settings: "kern" 1;
+  }
+
+  ::selection {
+    background-color: theme("colors.amber.DEFAULT" / 40%);
+  }
+
+  /* Visible focus rings everywhere — accessibility floor, not optional. */
+  :focus-visible {
+    outline: 2px solid theme("colors.amber.DEFAULT");
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* The "seal" hotspot marker — this app's signature visual element.
+     A soft pulsing ring evokes a manuscript stamp rather than a generic dot. */
+  .hotspot-seal {
+    @apply relative flex items-center justify-center rounded-full bg-amber/90 border-2 border-canvas animate-seal-pulse;
+  }
+
+  .editor-canvas-surface {
+    background-image:
+      linear-gradient(rgba(30, 42, 69, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30, 42, 69, 0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
