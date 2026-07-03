@@ -252,7 +252,7 @@ setAction({ type: "showPopup", title: hotspot.action?.type === "showPopup" ? hot
                   size="sm"
                   variant="accent"
                   className="flex-1"
-                  onClick={() => setOpenQuizId(hotspot.action!.type === "askQuestion" ? hotspot.action.quizId : null)}
+                  onClick={() => setOpenQuizId(hotspot.action?.type === "askQuestion" ? hotspot.action.quizId : null)}
                 >
                   تحرير الأسئلة
                 </Button>
