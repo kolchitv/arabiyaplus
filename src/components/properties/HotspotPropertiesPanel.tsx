@@ -175,28 +175,19 @@ export function HotspotPropertiesPanel({ page, hotspotId, allPages }: Props) {
               <Input
                 value={hotspot.action.title}
                 onChange={(e) =>
-setAction({
-  type: "showPopup",
-  title: e.target.value,
-  content:
-    hotspot.action?.type === "showPopup"
-      ? hotspot.action.content
-      : "",
-});              
+                  setAction({ type: "showPopup", title: e.target.value, content: hotspot.action!.type === "showPopup" ? hotspot.action.content : "" })
+                }
+              />
             </div>
             <div>
               <Label>المحتوى</Label>
               <Input
                 value={hotspot.action.content}
                 onChange={(e) =>
-setAction({
-  type: "showPopup",
-  title:
-    hotspot.action?.type === "showPopup"
-      ? hotspot.action.title
-      : "",
-  content: e.target.value,
-});            </div>
+                  setAction({ type: "showPopup", title: hotspot.action!.type === "showPopup" ? hotspot.action.title : "", content: e.target.value })
+                }
+              />
+            </div>
           </div>
         )}
 
@@ -263,7 +254,7 @@ setAction({
                   size="sm"
                   variant="accent"
                   className="flex-1"
-                  onClick={() => setOpenQuizId(hotspot.action?.type === "askQuestion" ? hotspot.action.quizId : null)}
+                  onClick={() => setOpenQuizId(hotspot.action!.type === "askQuestion" ? hotspot.action.quizId : null)}
                 >
                   تحرير الأسئلة
                 </Button>
