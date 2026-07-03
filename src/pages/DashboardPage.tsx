@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BookSpineCard } from "@/components/dashboard/BookSpineCard";
 import { useBookStore } from "@/store/bookStore";
 import { useUiStore } from "@/store/uiStore";
-import { importImagesAsPages, isPdfFile } from "@/services/importService";
+import { importFilesAsPages } from "@/services/importService";
 import { saveBook } from "@/services/db";
 import { createEmptyBook } from "@/store/bookStore";
 
@@ -20,22 +20,30 @@ export default function DashboardPage() {
     refreshRecentBooks();
   }, [refreshRecentBooks]);
 
+  const [isImporting, setIsImporting] = useState(false);
+
   async function handleImportFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
     setImportError(null);
     const files = Array.from(fileList);
 
-    if (files.some(isPdfFile)) {
-      setImportError("استيراد PDF متاح في المرحلة القادمة — جرّب صور PNG/JPG/WEBP الآن.");
-      return;
+    setIsImporting(true);
+    try {
+      const book = createEmptyBook({ title: files[0].name.replace(/\.[^/.]+$/, "") });
+      const pages = await importFilesAsPages(files, book);
+      if (pages.length === 0) {
+        setImportError("لم يتم العثور على صفحات قابلة للاستيراد. تأكد من أن الملفات PDF أو PNG/JPG/WEBP.");
+        return;
+      }
+      book.pages = pages;
+      await saveBook(book);
+      await refreshRecentBooks();
+      navigate(`/editor/${book.id}`);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "حدث خطأ أثناء الاستيراد.");
+    } finally {
+      setIsImporting(false);
     }
-
-    const book = createEmptyBook({ title: files[0].name.replace(/\.[^/.]+$/, "") });
-    const pages = await importImagesAsPages(files, book);
-    book.pages = pages.length > 0 ? pages : book.pages;
-    await saveBook(book);
-    await refreshRecentBooks();
-    navigate(`/editor/${book.id}`);
   }
 
   return (
@@ -67,8 +75,8 @@ export default function DashboardPage() {
         <Button size="lg" onClick={() => navigate("/book-info")}>
           <Plus size={18} /> كتاب جديد
         </Button>
-        <Button size="lg" variant="outline" onClick={() => fileInputRef.current?.click()}>
-          <Upload size={18} /> استيراد (PDF / صور)
+        <Button size="lg" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isImporting}>
+          <Upload size={18} /> {isImporting ? "جارٍ الاستيراد..." : "استيراد (PDF / صور)"}
         </Button>
         <input
           ref={fileInputRef}

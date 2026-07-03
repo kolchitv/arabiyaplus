@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Trash2, Plus } from "lucide-react";
 import type { BookPage, HotspotAction, AnimationKind } from "@/types/book";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AudioActionFields } from "@/components/audio/AudioActionFields";
 import { useBookStore } from "@/store/bookStore";
 import { useMediaStore } from "@/store/mediaStore";
+import { QuizBuilderModal } from "@/components/quiz/QuizBuilderModal";
 
 interface Props {
   page: BookPage;
@@ -39,12 +40,13 @@ const ANIMATION_LABELS: Record<AnimationKind, string> = {
 
 export function HotspotPropertiesPanel({ page, hotspotId, allPages }: Props) {
   const hotspot = page.hotspots.find((h) => h.id === hotspotId);
-  const { updateHotspot, deleteHotspot } = useBookStore();
+  const { updateHotspot, deleteHotspot, book, createQuiz } = useBookStore();
   const addFile = useMediaStore((s) => s.addFile);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const [openQuizId, setOpenQuizId] = useState<string | null>(null);
 
-  if (!hotspot) return null;
+  if (!hotspot || !book) return null;
 
   function setAction(action: HotspotAction | null) {
     updateHotspot(page.id, hotspotId, { action });
@@ -173,7 +175,7 @@ export function HotspotPropertiesPanel({ page, hotspotId, allPages }: Props) {
               <Input
                 value={hotspot.action.title}
                 onChange={(e) =>
-                  setAction({ type: "showPopup", title: e.target.value, content: hotspot.action?.type === "showPopup" ? hotspot.action.content : "" })
+                  setAction({ type: "showPopup", title: e.target.value, content: hotspot.action!.type === "showPopup" ? hotspot.action.content : "" })
                 }
               />
             </div>
@@ -182,7 +184,8 @@ export function HotspotPropertiesPanel({ page, hotspotId, allPages }: Props) {
               <Input
                 value={hotspot.action.content}
                 onChange={(e) =>
-setAction({ type: "showPopup", title: hotspot.action?.type === "showPopup" ? hotspot.action.title : "", content: e.target.value })                }
+                  setAction({ type: "showPopup", title: hotspot.action!.type === "showPopup" ? hotspot.action.title : "", content: e.target.value })
+                }
               />
             </div>
           </div>
@@ -217,9 +220,47 @@ setAction({ type: "showPopup", title: hotspot.action?.type === "showPopup" ? hot
         )}
 
         {hotspot.action?.type === "askQuestion" && (
-          <p className="font-ui text-xs text-ash">
-            سيتم ربط هذا الإجراء بمنشئ الاختبارات (Quiz Builder) في المرحلة القادمة.
-          </p>
+          <div className="space-y-2">
+            <Label>الاختبار المرتبط</Label>
+            <select
+              className="h-10 w-full rounded-xl border border-ash/30 bg-white/70 dark:bg-ink-light/40 px-3 text-sm font-ui text-ink dark:text-white"
+              value={hotspot.action.quizId}
+              onChange={(e) => setAction({ type: "askQuestion", quizId: e.target.value })}
+            >
+              <option value="" disabled>
+                اختر اختباراً
+              </option>
+              {book.quizzes.map((q) => (
+                <option key={q.id} value={q.id}>
+                  {q.title} ({q.items.length} سؤال)
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  const newId = createQuiz("اختبار الصفحة");
+                  setAction({ type: "askQuestion", quizId: newId });
+                  setOpenQuizId(newId);
+                }}
+              >
+                <Plus size={13} /> إنشاء اختبار جديد
+              </Button>
+              {hotspot.action.quizId && (
+                <Button
+                  size="sm"
+                  variant="accent"
+                  className="flex-1"
+                  onClick={() => setOpenQuizId(hotspot.action!.type === "askQuestion" ? hotspot.action.quizId : null)}
+                >
+                  تحرير الأسئلة
+                </Button>
+              )}
+            </div>
+          </div>
         )}
 
         {hotspot.action?.type === "runAnimation" && (
@@ -239,6 +280,7 @@ setAction({ type: "showPopup", title: hotspot.action?.type === "showPopup" ? hot
           </div>
         )}
       </div>
+      <QuizBuilderModal quizId={openQuizId} onClose={() => setOpenQuizId(null)} />
     </aside>
   );
 }

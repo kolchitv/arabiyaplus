@@ -8,8 +8,10 @@ import { useMediaStore } from "@/store/mediaStore";
 import { useHotspotAction } from "@/hooks/useHotspotAction";
 import { NavigationBar } from "@/components/navigation/NavigationBar";
 import { TableOfContents } from "@/components/navigation/TableOfContents";
+import { QuizRunner } from "@/components/quiz/runners/QuizRunner";
 import { Button } from "@/components/ui/button";
 import type { AnimationKind } from "@/types/book";
+import type { QuizAttemptResult } from "@/types/quiz";
 
 const ANIMATION_CLASS: Record<AnimationKind, string> = {
   fade: "animate-in fade-in",
@@ -24,7 +26,7 @@ export default function ReaderPage() {
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
   const { book, openBook } = useBookStore();
-  const { progress, load, visitPage, addStars, toggleBookmark } = useProgressStore();
+  const { progress, load, visitPage, addStars, toggleBookmark, recordQuizResult } = useProgressStore();
   const getAsset = useMediaStore((s) => s.getAsset);
   const hydrateBlobUrl = useMediaStore((s) => s.hydrateBlobUrl);
 
@@ -48,9 +50,17 @@ export default function ReaderPage() {
     if (pageId) visitPage(pageId);
   }, [pageId, visitPage]);
 
-  const { trigger, popup, closePopup, previewMedia, closePreview } = useHotspotAction((targetId) =>
-    setPageId(targetId)
+  const { trigger, popup, closePopup, previewMedia, closePreview, activeQuizId, closeQuiz } = useHotspotAction(
+    (targetId) => setPageId(targetId)
   );
+
+  const activeQuiz = book?.quizzes.find((q) => q.id === activeQuizId);
+
+  function handleQuizComplete(result: QuizAttemptResult) {
+    recordQuizResult(result.quizId, result.earnedPoints, result.totalPoints);
+    if (result.passed) addStars(3);
+    else addStars(1);
+  }
 
   const page = book?.pages.find((p) => p.id === pageId);
 
@@ -175,6 +185,9 @@ export default function ReaderPage() {
             <video src={previewMedia.url} controls autoPlay className="max-h-[80vh] max-w-[90vw] rounded-xl2 shadow-soft" />
           )}
         </div>
+      )}
+      {activeQuiz && (
+        <QuizRunner quiz={activeQuiz} onClose={closeQuiz} onComplete={handleQuizComplete} />
       )}
     </div>
   );

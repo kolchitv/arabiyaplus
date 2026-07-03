@@ -1,7 +1,9 @@
-import { Plus, Copy, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { useRef, useState } from "react";
+import { Plus, Copy, Trash2, ChevronUp, ChevronDown, Upload } from "lucide-react";
 import type { Book } from "@/types/book";
 import { Button } from "@/components/ui/button";
 import { useBookStore } from "@/store/bookStore";
+import { importFilesAsPages } from "@/services/importService";
 import { cn } from "@/utils/cn";
 
 interface Props {
@@ -12,14 +14,51 @@ interface Props {
 
 export function PageManagerSidebar({ book, activePageId, onSelect }: Props) {
   const { addPage, deletePage, duplicatePage, movePage } = useBookStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
+  async function handleImport(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    setIsImporting(true);
+    try {
+      const newPages = await importFilesAsPages(Array.from(fileList), book);
+      if (newPages.length > 0) {
+        useBookStore.setState((s) =>
+          s.book ? { book: { ...s.book, pages: [...s.book.pages, ...newPages] }, isDirty: true } : s
+        );
+      }
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   return (
     <aside className="flex h-full w-64 flex-col border-s border-ash/15 bg-white/60 dark:bg-ink-light/30">
       <div className="flex items-center justify-between border-b border-ash/15 p-3">
         <h2 className="font-display text-sm font-bold text-ink dark:text-white">الصفحات</h2>
-        <Button size="icon" variant="accent" onClick={() => addPage()} title="إضافة صفحة">
-          <Plus size={14} />
-        </Button>
+        <div className="flex gap-1">
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            title="استيراد PDF / صور"
+            disabled={isImporting}
+          >
+            <Upload size={14} />
+          </Button>
+          <Button size="icon" variant="accent" onClick={() => addPage()} title="إضافة صفحة">
+            <Plus size={14} />
+          </Button>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf,image/png,image/jpeg,image/webp"
+          multiple
+          className="hidden"
+          onChange={(e) => handleImport(e.target.files)}
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">

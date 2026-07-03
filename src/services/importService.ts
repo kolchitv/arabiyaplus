@@ -2,14 +2,13 @@ import { v4 as uuid } from "uuid";
 import type { Book, BookPage } from "@/types/book";
 import type { MediaAsset } from "@/types/media";
 import { useMediaStore } from "@/store/mediaStore";
+import { importPdfAsPages, isPdfFile } from "@/services/pdfImport";
 
 const SUPPORTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 
 /**
  * Imports one or more image files as new pages appended to the book.
  * Each image becomes a page background at its native resolution.
- * PDF import (page-by-page rasterization via pdf.js) lands in Phase 2 —
- * see importPdf() below for the integration point.
  */
 export async function importImagesAsPages(files: File[], book: Book): Promise<BookPage[]> {
   const addFile = useMediaStore.getState().addFile;
@@ -32,18 +31,29 @@ export async function importImagesAsPages(files: File[], book: Book): Promise<Bo
   return newPages;
 }
 
-export function isPdfFile(file: File): boolean {
-  return file.type === "application/pdf";
+/**
+ * Imports a mixed batch of files (images and/or PDFs) as new pages,
+ * appended in the order the files were selected. Each PDF is expanded
+ * into one page per PDF page automatically.
+ */
+export async function importFilesAsPages(files: File[], book: Book): Promise<BookPage[]> {
+  const allPages: BookPage[] = [];
+  let order = book.pages.length;
+
+  for (const file of files) {
+    if (isPdfFile(file)) {
+      const pdfPages = await importPdfAsPages(file, order);
+      allPages.push(...pdfPages);
+      order += pdfPages.length;
+    } else if (SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+      const [page] = await importImagesAsPages([file], { ...book, pages: [] });
+      if (page) {
+        allPages.push({ ...page, order });
+        order += 1;
+      }
+    }
+  }
+  return allPages;
 }
 
-/**
- * Phase 2 integration point: will use pdfjs-dist to rasterize each PDF
- * page onto a canvas, then hand the resulting image blobs to
- * importImagesAsPages()-style logic so every PDF page becomes an
- * editable page with hotspots.
- */
-export async function importPdf(_file: File): Promise<BookPage[]> {
-  throw new Error(
-    "استيراد ملفات PDF قيد التطوير في المرحلة القادمة. حالياً يمكنك استيراد صور PNG/JPG/WEBP."
-  );
-}
+export { isPdfFile };

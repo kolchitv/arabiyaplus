@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { v4 as uuid } from "uuid";
 import type { Book, BookInfo, BookPage, Hotspot } from "@/types/book";
+import type { Quiz, QuizItem } from "@/types/quiz";
 import { saveBook, loadBook, listBooks, deleteBook as dbDeleteBook } from "@/services/db";
 
 function nowIso() {
@@ -30,6 +31,7 @@ export function createEmptyBook(info: Partial<BookInfo> = {}): Book {
       animationsEnabled: true
     },
     pages: [],
+    quizzes: [],
     createdAt: timestamp,
     updatedAt: timestamp,
     version: 1
@@ -90,6 +92,16 @@ interface BookState {
   addHotspot: (pageId: string, hotspot: Hotspot) => void;
   updateHotspot: (pageId: string, hotspotId: string, patch: Partial<Hotspot>) => void;
   deleteHotspot: (pageId: string, hotspotId: string) => void;
+
+  // Quiz management
+  createQuiz: (title?: string) => string; // returns new quiz id
+  updateQuizMeta: (quizId: string, patch: Partial<Pick<Quiz, "title" | "passingScorePercent">>) => void;
+  deleteQuiz: (quizId: string) => void;
+  addQuizItem: (quizId: string, item: QuizItem) => void;
+  updateQuizItem: (quizId: string, itemId: string, item: QuizItem) => void;
+  deleteQuizItem: (quizId: string, itemId: string) => void;
+  reorderQuizItems: (quizId: string, orderedIds: string[]) => void;
+  getQuiz: (quizId: string) => Quiz | undefined;
 }
 
 function touch(book: Book): Book {
@@ -318,5 +330,66 @@ export const useBookStore = create<BookState>((set, get) => ({
       p.id === pageId ? { ...p, hotspots: p.hotspots.filter((h) => h.id !== hotspotId) } : p
     );
     set({ book: { ...book, pages }, history, isDirty: true });
-  }
+  },
+
+  createQuiz: (title = "اختبار جديد") => {
+    const { book } = get();
+    if (!book) return "";
+    const quiz: Quiz = { id: uuid(), title, items: [], passingScorePercent: 60 };
+    set({ book: { ...book, quizzes: [...book.quizzes, quiz] }, isDirty: true });
+    return quiz.id;
+  },
+
+  updateQuizMeta: (quizId, patch) => {
+    const { book } = get();
+    if (!book) return;
+    const quizzes = book.quizzes.map((q) => (q.id === quizId ? { ...q, ...patch } : q));
+    set({ book: { ...book, quizzes }, isDirty: true });
+  },
+
+  deleteQuiz: (quizId) => {
+    const { book } = get();
+    if (!book) return;
+    const quizzes = book.quizzes.filter((q) => q.id !== quizId);
+    set({ book: { ...book, quizzes }, isDirty: true });
+  },
+
+  addQuizItem: (quizId, item) => {
+    const { book } = get();
+    if (!book) return;
+    const quizzes = book.quizzes.map((q) => (q.id === quizId ? { ...q, items: [...q.items, item] } : q));
+    set({ book: { ...book, quizzes }, isDirty: true });
+  },
+
+  updateQuizItem: (quizId, itemId, item) => {
+    const { book } = get();
+    if (!book) return;
+    const quizzes = book.quizzes.map((q) =>
+      q.id === quizId ? { ...q, items: q.items.map((i) => (i.id === itemId ? item : i)) } : q
+    );
+    set({ book: { ...book, quizzes }, isDirty: true });
+  },
+
+  deleteQuizItem: (quizId, itemId) => {
+    const { book } = get();
+    if (!book) return;
+    const quizzes = book.quizzes.map((q) =>
+      q.id === quizId ? { ...q, items: q.items.filter((i) => i.id !== itemId) } : q
+    );
+    set({ book: { ...book, quizzes }, isDirty: true });
+  },
+
+  reorderQuizItems: (quizId, orderedIds) => {
+    const { book } = get();
+    if (!book) return;
+    const quizzes = book.quizzes.map((q) => {
+      if (q.id !== quizId) return q;
+      const byId = new Map(q.items.map((i) => [i.id, i]));
+      const items = orderedIds.map((id) => byId.get(id)).filter((i): i is QuizItem => !!i);
+      return { ...q, items };
+    });
+    set({ book: { ...book, quizzes }, isDirty: true });
+  },
+
+  getQuiz: (quizId) => get().book?.quizzes.find((q) => q.id === quizId)
 }));

@@ -6,9 +6,9 @@
  * so the whole book can be persisted to IndexedDB / exported as JSON.
  */
 
-export type Language = "ar" | "en" | "fr";
+import type { Quiz } from "@/types/quiz";
 
-export interface BookInfo {
+export type Language = "ar" | "en" | "fr";export interface BookInfo {
   title: string;
   author: string;
   grade: string;
@@ -33,6 +33,7 @@ export interface Book {
   info: BookInfo;
   settings: BookSettings;
   pages: BookPage[];
+  quizzes: Quiz[];
   createdAt: string; // ISO date
   updatedAt: string; // ISO date
   version: number; // schema version, for future migrations

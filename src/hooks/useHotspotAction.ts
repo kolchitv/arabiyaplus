@@ -18,6 +18,7 @@ export function useHotspotAction(onNavigate: (pageId: string) => void) {
   const [previewMedia, setPreviewMedia] = useState<{ kind: "image" | "video"; url: string } | null>(
     null
   );
+  const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
   const getAsset = useMediaStore((s) => s.getAsset);
   const hydrateBlobUrl = useMediaStore((s) => s.hydrateBlobUrl);
 
@@ -61,7 +62,7 @@ export function useHotspotAction(onNavigate: (pageId: string) => void) {
         window.open(action.url, "_blank", "noopener,noreferrer");
         break;
       case "askQuestion":
-        // Quiz linking lands in Phase 2's Quiz Builder integration.
+        if (action.quizId) setActiveQuizId(action.quizId);
         break;
       case "runAnimation":
         // Visual feedback is handled by the calling component via CSS/Framer Motion.
@@ -69,5 +70,13 @@ export function useHotspotAction(onNavigate: (pageId: string) => void) {
     }
   }
 
-  return { trigger, popup, closePopup: () => setPopup(null), previewMedia, closePreview: () => setPreviewMedia(null) };
+  return {
+    trigger,
+    popup,
+    closePopup: () => setPopup(null),
+    previewMedia,
+    closePreview: () => setPreviewMedia(null),
+    activeQuizId,
+    closeQuiz: () => setActiveQuizId(null)
+  };
 }

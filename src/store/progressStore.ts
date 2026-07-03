@@ -10,6 +10,7 @@ interface ProgressState {
   addStars: (count: number) => void;
   addCoins: (count: number) => void;
   toggleBookmark: (pageId: string) => void;
+  recordQuizResult: (quizId: string, earnedPoints: number, totalPoints: number) => void;
 }
 
 function persist(progress: StudentProgress) {
@@ -65,6 +66,25 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
       ? progress.bookmarks.filter((id) => id !== pageId)
       : [...progress.bookmarks, pageId];
     const updated = { ...progress, bookmarks };
+    set({ progress: updated });
+    persist(updated);
+  },
+
+  recordQuizResult: (quizId, earnedPoints, totalPoints) => {
+    const { progress } = get();
+    if (!progress) return;
+    const previous = progress.quizResults[quizId];
+    const updated: StudentProgress = {
+      ...progress,
+      quizResults: {
+        ...progress.quizResults,
+        [quizId]: {
+          earnedPoints: Math.max(earnedPoints, previous?.earnedPoints ?? 0),
+          totalPoints,
+          attempts: (previous?.attempts ?? 0) + 1
+        }
+      }
+    };
     set({ progress: updated });
     persist(updated);
   }
