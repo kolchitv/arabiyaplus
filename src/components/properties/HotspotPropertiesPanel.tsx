@@ -168,28 +168,43 @@ export function HotspotPropertiesPanel({ page, hotspotId, allPages }: Props) {
           </div>
         )}
 
-        {hotspot.action?.type === "showPopup" && (
-          <div className="space-y-2">
-            <div>
-              <Label>عنوان النافذة</Label>
-              <Input
-                value={hotspot.action.title}
-                onChange={(e) =>
-                  setAction({ type: "showPopup", title: e.target.value, content: hotspot.action!.type === "showPopup" ? hotspot.action.content : "" })
-                }
-              />
-            </div>
-            <div>
-              <Label>المحتوى</Label>
-              <Input
-                value={hotspot.action.content}
-                onChange={(e) =>
-                  setAction({ type: "showPopup", title: hotspot.action!.type === "showPopup" ? hotspot.action.title : "", content: e.target.value })
-                }
-              />
-            </div>
-          </div>
-        )}
+       {hotspot.action?.type === "showPopup" && (
+  <div className="space-y-2">
+    <div>
+      <Label>عنوان النافذة</Label>
+      <Input
+        value={hotspot.action.title}
+        onChange={(e) =>
+          setAction({
+            type: "showPopup",
+            title: e.target.value,
+            content:
+              hotspot.action?.type === "showPopup"
+                ? hotspot.action.content
+                : "",
+          })
+        }
+      />
+    </div>
+
+    <div>
+      <Label>المحتوى</Label>
+      <Input
+        value={hotspot.action.content}
+        onChange={(e) =>
+          setAction({
+            type: "showPopup",
+            title:
+              hotspot.action?.type === "showPopup"
+                ? hotspot.action.title
+                : "",
+            content: e.target.value,
+          })
+        }
+      />
+    </div>
+  </div>
+)}
 
         {hotspot.action?.type === "navigatePage" && (
           <div>
