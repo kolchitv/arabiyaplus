@@ -264,19 +264,22 @@ export function HotspotPropertiesPanel({ page, hotspotId, allPages }: Props) {
               >
                 <Plus size={13} /> إنشاء اختبار جديد
               </Button>
-              {hotspot.action.quizId && (
-                <Button
-                  size="sm"
-                  variant="accent"
-                  className="flex-1"
-                  onClick={() => setOpenQuizId(hotspot.action!.type === "askQuestion" ? hotspot.action.quizId : null)}
-                >
-                  تحرير الأسئلة
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
+              {hotspot.action?.quizId && (
+  <Button
+    size="sm"
+    variant="accent"
+    className="flex-1"
+    onClick={() =>
+      setOpenQuizId(
+        hotspot.action?.type === "askQuestion"
+          ? hotspot.action.quizId
+          : null
+      )
+    }
+  >
+    تحرير الأسئلة
+  </Button>
+)}
 
         {hotspot.action?.type === "runAnimation" && (
           <div>
