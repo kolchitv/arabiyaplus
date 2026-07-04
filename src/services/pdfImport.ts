@@ -35,8 +35,11 @@ export async function importPdfAsPages(file: File, startOrder: number): Promise<
     const context = canvas.getContext("2d");
     if (!context) continue;
 
-    await pdfPage.render({ canvasContext: context, viewport, canvas }).promise;
-
+await pdfPage.render({
+  canvasContext: context,
+  viewport,
+}).promise;
+    
     const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) continue;
 
